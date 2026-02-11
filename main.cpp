@@ -109,16 +109,77 @@ void getLineWithQoutes(std::string& str) {
     }
 }
 
+std::size_t getMaxX(std::string_view str) {
+     std::size_t maxX = 0;
+     std::size_t i = 0;
 
-// std::size_t getMaxX(std::string_view str) {
-//     std::size_t maxX = 0;
-//     std::size_t i = 0;
-//
-//     std::size_t newX = std::find(str.begin() + i);
-//     while ()
-// }
+     std::size_t newX = str.find('\n', i);
+     while (newX != std::string_view::npos) {
+         if (newX - i > maxX) {
+             maxX = newX - i;
+         }
+
+         i = newX + 1;
+         newX = str.find('\n', i);
+     }
+
+    if (str.length() - i > maxX) {
+        maxX = str.length() - i;
+    }
+
+    return maxX;
+}
+
+
+std::size_t getCountY(std::string_view str) {
+    std::size_t count = 0;
+    std::size_t i = 0;
+    while (str.find('\n', i) != std::string_view::npos) {
+        count++;
+        i = str.find('\n', i) + 1;
+    }
+    return count + 1;
+}
+
+
+std::size_t printY(std::string_view str, std::size_t& indexPrint) {
+    std::string printStr;
+    std::size_t len = 0;
+
+    std::size_t lastIndexPrint = indexPrint;
+
+    if (str.find('\n', indexPrint) == std::string_view::npos) {
+        len = str.length() - indexPrint;
+        indexPrint = str.length();
+    } else {
+        std::size_t nextY = str.find('\n', indexPrint);
+        len = nextY - indexPrint;
+
+        indexPrint = nextY + 1;
+    }
+
+    printStr.resize(len);
+    std::memcpy(printStr.data(), str.data() + lastIndexPrint, len);
+
+    std::cout << printStr;
+
+    return len;
+}
+
+
+void printLine(const std::string_view str, std::size_t& indexPrint, std::size_t globalXLen) {
+    std::size_t lenPrinted = printY(str, indexPrint);
+    std::string outStr;
+
+    std::size_t CountSpacePrinted = globalXLen - lenPrinted;
+    outStr.resize(CountSpacePrinted);
+
+    std::fill_n(outStr.data(), CountSpacePrinted, ' ');
+    std::cout << outStr;
+}
 
 int main() {
+
     std::size_t countMessages = 0;
     std::cin >> countMessages;
 
@@ -128,21 +189,36 @@ int main() {
 
 
     std::size_t totalLen = 2 + (countMessages * 3) - 1;
+
     std::vector<std::size_t> maxXLens(countMessages);
+    std::vector<std::size_t> IndexPrintAfter(countMessages, 0);
+
+    std::size_t maxY = 0;
 
     for (std::size_t i = 0; i < countMessages; i++) {
         getLineWithQoutes(strs[i]);
+        maxXLens[i] = getMaxX(strs[i]);
 
-        totalLen += strs[i].length();
+        totalLen += getMaxX(strs[i]);
+
+        maxY = maxY > getCountY(strs[i]) ? maxY : getCountY(strs[i]);
     }
 
     printFirstAndLastLine(totalLen);
-    std::cout << "|";
 
-    for (auto& str : strs) {
-        std::cout << ' ' << str << " |";
+    for (std::size_t y = 0; y < maxY; y++) {
+        std::cout << '|';
+
+        for (std::size_t i = 0; i < strs.size(); i++) {
+            std::cout << ' ';
+            printLine(strs[i], IndexPrintAfter[i], maxXLens[i]);
+            std::cout << " |";
+        }
+
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
+
     printFirstAndLastLine(totalLen);
+
     return 0;
 }
