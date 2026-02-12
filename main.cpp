@@ -3,7 +3,8 @@
 #include <vector>
 #include <string>
 
-
+#include "inputer.h"
+#include "stringMethods.h"
 
 void printFirstAndLastLine(std::size_t len) {
     std::string startEndLine;
@@ -12,133 +13,6 @@ void printFirstAndLastLine(std::size_t len) {
     std::fill_n(startEndLine.begin() + 1, len - 2, '-');
     startEndLine[startEndLine.length()-1] = '|';
     std::cout << startEndLine << std::endl;
-}
-
-
-enum QuotedType : unsigned char {
-    unintialized,
-    oneQuoted = '\'',
-    doubleQuoted = '"'
-};
-
-std::size_t QuoteEndIndex(std::string_view str) {
-    bool quoted = false;
-    bool backslash = false;
-    QuotedType quotedT = unintialized;
-
-    for (std::size_t i = 0; i < str.length(); i++) {
-        if (backslash) {
-            backslash = false;
-        } else if (str[i] == '\\') {
-            backslash = true;
-        } else if (str[i] == '\'' || str[i] == '"') {
-            if (quoted) {
-                if (quotedT == str[i]) {
-                    return i;
-                }
-            } else {
-                quotedT = static_cast<QuotedType>(str[i]);
-                quoted = true;
-            }
-        }
-    }
-
-    return -1;
-}
-
-bool haveFirstQuotedSymbol(std::string_view str) {
-    for (auto character : str) {
-        if (!std::isspace(character)) {
-            if (character == '"' || character == '\'')
-                return true;
-
-            return false;
-        }
-    }
-
-    return false;
-}
-
-
-std::size_t getFirstQuote(std::string_view str) {
-    bool backslash = false;
-
-    for (std::size_t i = 0; i < str.length(); i++) {
-        if (backslash) {
-            backslash = false;
-        } else if (str[i] == '\\') {
-            backslash = true;
-        } else if (str[i] == '\'' || str[i] == '"') {
-            return i;
-        }
-    }
-    return str.length();
-}
-
-std::size_t getFirstNotSpaceSymbol(std::string_view str) {
-    std::size_t i = 0;
-    for (; i < str.length() && std::isspace(str[i]); i++) {}
-
-    return i;
-}
-
-void getLineWithQoutes(std::string& str) {
-    std::getline(std::cin, str);
-    if (haveFirstQuotedSymbol(str)) {
-        while (QuoteEndIndex(str) == -1) {
-            str += '\n';
-
-            std::string tmpStr;
-            std::getline(std::cin, tmpStr);
-
-            str += tmpStr;
-        }
-        str.resize(QuoteEndIndex(str) + 1);
-
-        std::size_t firstSymbol = getFirstNotSpaceSymbol(str);
-        std::memcpy(str.data(), str.data() + firstSymbol, str.length() - firstSymbol);
-        str.resize(str.length() - firstSymbol);
-        std::memcpy(str.data(), str.data() + 1, str.length() - 1);
-        str.resize(str.length() - 2);
-    } else {
-        str.resize(getFirstQuote(str));
-
-        std::size_t firstSymbol = getFirstNotSpaceSymbol(str);
-        std::memcpy(str.data(), str.data() + firstSymbol, str.length() - firstSymbol);
-        str.resize(str.length() - firstSymbol);
-    }
-}
-
-std::size_t getMaxX(std::string_view str) {
-     std::size_t maxX = 0;
-     std::size_t i = 0;
-
-     std::size_t newX = str.find('\n', i);
-     while (newX != std::string_view::npos) {
-         if (newX - i > maxX) {
-             maxX = newX - i;
-         }
-
-         i = newX + 1;
-         newX = str.find('\n', i);
-     }
-
-    if (str.length() - i > maxX) {
-        maxX = str.length() - i;
-    }
-
-    return maxX;
-}
-
-
-std::size_t getCountY(std::string_view str) {
-    std::size_t count = 0;
-    std::size_t i = 0;
-    while (str.find('\n', i) != std::string_view::npos) {
-        count++;
-        i = str.find('\n', i) + 1;
-    }
-    return count + 1;
 }
 
 
@@ -196,12 +70,12 @@ int main() {
     std::size_t maxY = 0;
 
     for (std::size_t i = 0; i < countMessages; i++) {
-        getLineWithQoutes(strs[i]);
-        maxXLens[i] = getMaxX(strs[i]);
+        getLineWithQoutes(strs[i], std::cin);
+        maxXLens[i] = stringMethods::getMaxX(strs[i]);
 
-        totalLen += getMaxX(strs[i]);
+        totalLen += stringMethods::getMaxX(strs[i]);
 
-        maxY = maxY > getCountY(strs[i]) ? maxY : getCountY(strs[i]);
+        maxY = maxY > stringMethods::getCountY(strs[i]) ? maxY : stringMethods::getCountY(strs[i]);
     }
 
     printFirstAndLastLine(totalLen);
