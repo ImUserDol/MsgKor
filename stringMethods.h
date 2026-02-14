@@ -14,8 +14,10 @@ namespace stringMethods {
     };
 
     std::size_t getMaxX(std::string_view str);
+    std::size_t getMaxX(std::string* str);
 
     std::size_t getCountY(std::string_view str);
+    std::size_t getCountY(std::string* str);
 
     LineData getLineByY(std::string_view str, std::size_t y);
 } // stringMethods5
