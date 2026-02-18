@@ -6,6 +6,8 @@
 #define MSGKOR_KOROBOCHKA_H
 #include <vector>
 
+#include "korobochka.h"
+
 namespace Korobochka {
 
     enum TypeElem {
@@ -14,14 +16,17 @@ namespace Korobochka {
         Tstr
     };
 
-    // TODO дореализовывать inPrint структуру
     struct ElementData {
         TypeElem type{uninitialized};
         void* data{};
 
+
         ~ElementData();
         ElementData(ElementData&& other) noexcept;
         ElementData(TypeElem type, void* data): type(type), data(data) {};
+        constexpr ElementData(const ElementData&);
+        ElementData& operator=(const ElementData& other);
+
     };
 
     class Korobka;
@@ -35,40 +40,45 @@ namespace Korobochka {
         stackKorobok(std::size_t parseX, std::size_t parseY, Korobka& korobka) : xParse(parseX), yParse(parseY), korobka(korobka) {};
     };
 
-    struct calcYStack : stackKorobok {
-        std::size_t maxY = 0;
-        std::size_t yInXNow = 0;
+    struct stackSaveX {
+        std::size_t xParse = 0;
+        Korobka& korobka;
 
-        calcYStack(std::size_t maxY, std::size_t yInXNow, std::size_t parseX, std::size_t parseY, Korobka& korobka): maxY(maxY), yInXNow(yInXNow), stackKorobok(parseX, parseY, korobka) {};
-    };
-
-    struct calcXAlignStack : stackKorobok {
-        std::size_t maxXTotal = 0;
-
-        calcXAlignStack(std::size_t maxXInY, std::size_t parseX, std::size_t parseY, Korobka& korobka): maxXTotal(maxXInY), stackKorobok(parseX, parseY, korobka) {};
+        stackSaveX(std::size_t parseX, Korobka& korobka): xParse(parseX), korobka(korobka) {};
     };
 
 
     class Korobka {
         public:
+
+        bool StartLinePrinted = false;
+        std::size_t yPrint = 0;
+
         std::size_t countX;
         std::size_t countY;
 
         std::vector<std::size_t> yAlignPerY;
-
         std::vector<std::size_t> xAlignPerX;
+
+        std::vector<std::size_t> nextXPrint;
 
         std::vector<ElementData> data;
 
 
         void calcAlignXPerX();
         void calcAlignYPerLine();
+        void printKorobka();
 
         Korobka(std::size_t xCount, std::size_t yCount): countX(xCount), countY(yCount) {
             yAlignPerY.resize(countY, 0);
+
             xAlignPerX.resize(countX, 0);
+            nextXPrint.resize(countX, 0);
         };
+
+        Korobka(): Korobka(0,0) {};
     };
+
 } // korobochka
 
 #endif //MSGKOR_KOROBOCHKA_H

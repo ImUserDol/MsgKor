@@ -13,13 +13,11 @@ namespace stringMethods {
         std::size_t LineLength;
     };
 
-    std::size_t getMaxX(std::string_view str);
-    std::size_t getMaxX(std::string* str);
+    std::size_t getMaxX(const std::string* str);
 
-    std::size_t getCountY(std::string_view str);
-    std::size_t getCountY(std::string* str);
+    std::size_t getCountY(const std::string* str);
 
-    LineData getLineByY(std::string_view str, std::size_t y);
+    std::size_t getLineSize(const std::string* str, std::size_t pos);
 } // stringMethods5
 
 #endif //MSGKOR_STRINGMETHODS_H

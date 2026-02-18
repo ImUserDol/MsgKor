@@ -4,6 +4,7 @@
 
 #include "korobochka.h"
 
+#include <cstring>
 #include <iostream>
 #include <ostream>
 #include <string>
@@ -20,7 +21,6 @@ namespace Korobochka {
             case Tstr: {
                 if (data) {
                     auto* str = static_cast<std::string*>(data);
-                    // std::cout << "Deleting str: " << *str << std::endl;
                     delete str;
 
                     data = nullptr;
@@ -30,6 +30,9 @@ namespace Korobochka {
         }
     }
 
+
+
+
     ElementData::ElementData(ElementData&& other) noexcept {
         type = other.type;
         data = other.data;
@@ -38,6 +41,114 @@ namespace Korobochka {
         other.type = uninitialized;
     };
 
+    ElementData &ElementData::operator=(const ElementData &other) {
+        if (this != &other) {
+            type = other.type;
+            data = other.data;
+        }
+        return *this;
+    }
+
+    constexpr ElementData::ElementData(const ElementData& element_data) {
+        type = element_data.type;
+        data = element_data.data;
+    }
+
+    void Korobka::printKorobka() {
+        std::string resultString;
+
+        while (yPrint != -1) {
+            std::vector<stackSaveX> stackPrints;
+            std::size_t result = 0;
+            stackPrints.emplace_back(0, *this);
+
+            while (!stackPrints.empty()) {
+                auto& korobkaNow = stackPrints.back();
+                std::size_t totalAlign = 1;
+
+                for (auto i : korobkaNow.korobka.xAlignPerX) {
+                    totalAlign += i+3;
+                }
+
+                if (!korobkaNow.korobka.StartLinePrinted || korobkaNow.korobka.yPrint == -1 || korobkaNow.korobka.yAlignPerY[korobkaNow.korobka.yPrint] == 0) {
+                    korobkaNow.korobka.StartLinePrinted = true;
+
+
+                    result = totalAlign;
+
+                    std::string tmpStr;
+                    tmpStr.resize(totalAlign);
+
+                    char characterPrint = '-';
+                    if (korobkaNow.korobka.yPrint == -1) {
+                        characterPrint = ' ';
+                    } else {
+                        if (korobkaNow.korobka.yAlignPerY[korobkaNow.korobka.yPrint] == 0) {
+                            std::fill_n(korobkaNow.korobka.nextXPrint.begin(), korobkaNow.korobka.nextXPrint.size(), 0);
+                            korobkaNow.korobka.yPrint = korobkaNow.korobka.yAlignPerY.size()-1 == korobkaNow.korobka.yPrint ? -1 : korobkaNow.korobka.yPrint + 1;
+                        }
+                    }
+                    std::fill_n(tmpStr.begin(), tmpStr.size(), characterPrint);
+                    resultString += tmpStr;
+
+                    stackPrints.pop_back();
+                    continue;
+                }
+
+                if (korobkaNow.xParse != 0) {
+                    std::size_t alignX = korobkaNow.korobka.xAlignPerX[korobkaNow.xParse-1] - result;
+
+                    for (std::size_t i = 0; i < alignX; i++) {
+                        resultString += ' ';
+                    }
+
+                    resultString += ' ';
+                }
+
+                resultString += '|';
+
+                bool korobkaFinded = false;
+
+
+                for (;korobkaNow.xParse < korobkaNow.korobka.countX; korobkaNow.xParse++) {
+                    auto& element = korobkaNow.korobka.data[korobkaNow.korobka.yPrint * korobkaNow.korobka.countX + korobkaNow.xParse];
+
+                    resultString += ' ';
+                    if (element.type == Tstr) {
+                        std::size_t pos = korobkaNow.korobka.nextXPrint[korobkaNow.xParse];
+                        std::size_t lineSize = stringMethods::getLineSize(static_cast<std::string*>(element.data), pos);
+                        korobkaNow.korobka.nextXPrint[korobkaNow.xParse] = pos + lineSize + (pos+lineSize == static_cast<std::string*>(element.data)->length() ? 0 : 1);
+
+                        resultString.append(static_cast<std::string*>(element.data)->data() + pos, lineSize);
+
+                        std::size_t alignCount = korobkaNow.korobka.xAlignPerX[korobkaNow.xParse] - lineSize;
+                        for (std::size_t i = 0; i < alignCount; i++) {
+                            resultString += ' ';
+                        }
+
+                        resultString += " |";
+                    } else {
+                        korobkaNow.xParse++;
+                        stackPrints.emplace_back(0, *static_cast<Korobka*>(element.data));
+                        korobkaFinded = true;
+                        break;
+                    }
+                }
+
+                if (korobkaFinded) {
+                    continue;
+                }
+
+                result = totalAlign;
+
+                korobkaNow.korobka.yAlignPerY[korobkaNow.korobka.yPrint]--;
+                stackPrints.pop_back();
+            }
+            resultString += '\n';
+        }
+
+        std::cout << resultString << std::endl;
+    }
 
     void Korobka::calcAlignXPerX() {
         for (std::size_t x = 0; x < countX; x++) {
@@ -48,8 +159,8 @@ namespace Korobochka {
                 if (firstTableElement.type == Tstr) {
                     xAlignPerX[x] = std::max(stringMethods::getMaxX(static_cast<std::string*>(firstTableElement.data)), xAlignPerX[x]);
                 } else {
-                    std::vector<calcXAlignStack> StackKorobok;
-                    StackKorobok.emplace_back(0, 0, 0, *static_cast<Korobka*>(firstTableElement.data));
+                    std::vector<stackKorobok> StackKorobok;
+                    StackKorobok.emplace_back(0, 0, *static_cast<Korobka*>(firstTableElement.data));
 
                     std::size_t lastMaxX = 0;
 
@@ -69,9 +180,9 @@ namespace Korobochka {
                                     std::size_t countX = stringMethods::getMaxX(static_cast<std::string*>(elementInKorobka.data));
                                     element.korobka.xAlignPerX[element.xParse] = std::max(countX, element.korobka.xAlignPerX[element.xParse]);
                                 } else {
-                                    StackKorobok.emplace_back(0,0,0, *static_cast<Korobka*>(elementInKorobka.data));
-                                    findedKorobka = true;
                                     element.yParse++;
+                                    StackKorobok.emplace_back(0,0, *static_cast<Korobka*>(elementInKorobka.data));
+                                    findedKorobka = true;
                                     break;
                                 }
                             }
@@ -85,18 +196,16 @@ namespace Korobochka {
                         if (findedKorobka)
                             continue;
 
-                        lastMaxX = 2;
+                        lastMaxX = 1;
 
                         for (auto alignX: element.korobka.xAlignPerX) {
-                            lastMaxX += alignX+2;
+                            lastMaxX += alignX+3;
                         }
-                        element.maxXTotal = lastMaxX;
+
                         StackKorobok.pop_back();
                     }
 
                     xAlignPerX[x] = std::max(lastMaxX, xAlignPerX[x]);
-
-                    // StackKorobok.emplace_back();
                 }
             }
         }
@@ -108,25 +217,20 @@ namespace Korobochka {
             std::size_t maxY = 0;
 
             for (std::size_t x = 0; x < countX; x++) {
-                // std::cout << "index:" << y*countX + x << std::endl;
-                // std::cout << "Size: " << data.size() << std::endl;
 
                 if (data[y*countX + x].type == Tstr) {
                     std::size_t countY = stringMethods::getCountY(static_cast<std::string*>(data[y*countX + x].data));
                     maxY = countY > maxY ? countY : maxY;
                 } else {
-
                     std::size_t lastMaxY = 0;
 
-                    std::vector<calcYStack> StackKorobok;
-                    StackKorobok.emplace_back(0, 0, 0, 0, *static_cast<Korobka*>(data[y*countX + x].data));
-
+                    std::vector<stackKorobok> StackKorobok;
+                    StackKorobok.emplace_back(0, 0, *static_cast<Korobka*>(data[y*countX + x].data));
                     while (!StackKorobok.empty()) {
                         auto& element = StackKorobok.back();
 
                         if (element.yParse != 0) {
                             element.korobka.yAlignPerY[element.yParse - 1] = std::max(element.korobka.yAlignPerY[element.yParse - 1], lastMaxY);
-                            element.yInXNow += lastMaxY;
                         }
 
                         bool findedKorobka = false;
@@ -134,40 +238,35 @@ namespace Korobochka {
                         for (; element.xParse < element.korobka.countX; element.xParse++) {
                             for (; element.yParse < element.korobka.countY; element.yParse++) {
 
-                                // std::cout << " y:" << yElem << " xParse:" << element.xParse << " countY:" << element.korobka.countY << " countX:" << element.korobka.countX << std::endl;
                                 auto& elementInKorobka = element.korobka.data[element.yParse * element.korobka.countX + element.xParse];
                                 if (elementInKorobka.type == Tstr) {
                                     std::size_t countY = stringMethods::getCountY(static_cast<std::string*>(elementInKorobka.data));
                                     element.korobka.yAlignPerY[element.yParse] = std::max(element.korobka.yAlignPerY[element.yParse], countY);
 
-                                    element.yInXNow += countY;
-                                    // std::cout << "after" << std::endl;
                                 } else {
                                     element.yParse++;
-                                    StackKorobok.emplace_back(0,0,0,0, *static_cast<Korobka*>(elementInKorobka.data));
+                                    StackKorobok.emplace_back(0,0, *static_cast<Korobka*>(elementInKorobka.data));
                                     findedKorobka = true;
                                     break;
-                                    //Брякнуться из этого ебанутого цикла
                                 }
                             }
 
                             if (findedKorobka)
                                 break;
 
-                            element.maxY = element.yInXNow > element.maxY ? element.yInXNow : element.maxY;
-                            element.yInXNow = 0;
                             element.yParse = 0;
-                            //Тут тоже
                         }
 
                         if (findedKorobka)
                             continue;
 
-                        lastMaxY = element.maxY + 2;
-                        StackKorobok.pop_back();
-                        //Обработать выход тут
-                    }
+                        lastMaxY = 0;
+                        for (auto i: element.korobka.yAlignPerY) {
+                            lastMaxY += i+2;
+                        }
 
+                        StackKorobok.pop_back();
+                    }
                     maxY = lastMaxY > maxY ? lastMaxY : maxY;
 
                 }
