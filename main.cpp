@@ -121,6 +121,7 @@ int main() {
     startKorobka.calcAlignYPerLine();
     startKorobka.calcAlignXPerX();
 
+    std::cout << '\n';
     startKorobka.printKorobka();
     return 0;
 }

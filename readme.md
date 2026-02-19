@@ -24,6 +24,7 @@ Please enter a string
 
 
 :)))'
+
 ---------------------------------------------------------
 | -------------- | Striiiiiiiiiiiiiiiiiiinggggggggggg!! |
 | | My string! | |                                      |
