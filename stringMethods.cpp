@@ -49,4 +49,19 @@ namespace stringMethods {
         }
         return count + 1;
     }
+
+    bool startwith(std::string_view str, std::string_view prefix) {
+        if (prefix.length() > str.length()) {
+            return false;
+        }
+
+        for (std::size_t i = 0; i < prefix.length(); i++) {
+            if (prefix[i] != str[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 } // stringMethods

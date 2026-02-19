@@ -2,60 +2,125 @@
 #include <vector>
 #include <string>
 
+#include "inputer.h"
 #include "korobochka.h"
+#include "stringMethods.h"
 
+
+struct korobkaNode {
+    Korobochka::Korobka& korobka;
+    korobkaNode* prev = nullptr;
+};
+
+
+enum enteredType : unsigned char {
+    uninitialized = 0,
+    error,
+    Tstr,
+    Tkorobka
+};
+
+
+
+bool allSpace(std::string_view str) {
+    std::size_t i = 0;
+    for (; i < str.length() && std::isspace(str[i]); i++) {}
+
+    return str.length() == i;
+}
+
+enteredType getEnteredType(std::string str) {
+    for (auto& c : str) {
+        c = std::tolower(c);
+    }
+
+    if (stringMethods::startwith(str, "str") && allSpace(str.data() + 3))
+        return Tstr;
+    if (stringMethods::startwith(str, "korobka") && allSpace(str.data() + 7))
+        return Tkorobka;
+
+    return error;
+}
 
 int main() {
-    auto* strPtr = new std::string;
-    *strPtr = "Hello world!Hellllllllllllooooooooo!F";
+    Korobochka::Korobka startKorobka;
 
-    auto* strPtr2 = new std::string;
-    *strPtr2 = "Hello world!\n:)";
+    while (true) {
+        std::cout << "Please enter a valid x and y for you korobka" << std::endl;
+        std::cin >> startKorobka.countX >> startKorobka.countY;
 
-    auto* strPtr3 = new std::string;
-    *strPtr3 = "Hello world!\n:)";
+        if (startKorobka.countX != 0 && startKorobka.countY != 0)
+            break;
+    }
 
-    auto* strPtrKorobka2 = new std::string;
-    *strPtrKorobka2 = "Hello world!\n:)";
+    startKorobka.data.reserve(startKorobka.countX * startKorobka.countY);
 
-    auto* strPtrKorobka22 = new std::string;
-    *strPtrKorobka22 = "Hello world!\n:)";
+    startKorobka.xAlignPerX.resize(startKorobka.countX, 0);
+    startKorobka.yAlignPerY.resize(startKorobka.countY, 0);
+    startKorobka.nextXPrint.resize(startKorobka.countX, 0);
 
-    auto* strPtrKorobka3 = new std::string;
-    *strPtrKorobka3 = "Hello world!\n\n\n\n\n:)";
+    auto* korobkaLinkedList = new korobkaNode{startKorobka};
+    bool newLinkedList = false;
 
+    do {
+        while (korobkaLinkedList->korobka.data.size() < korobkaLinkedList->korobka.countX * korobkaLinkedList->korobka.countY) {
+            std::cout << "Please enter a type" << std::endl;
+            std::string tmpStr;
 
-    auto* korobka3 = new Korobochka::Korobka{1,1};
-    Korobochka::ElementData elementKor3{Korobochka::Tstr, strPtrKorobka3};
-    korobka3 -> data.push_back(std::move(elementKor3));
+            enteredType enteredType;
+            do {
+                getLineWithQoutes(tmpStr, std::cin);
+                enteredType = getEnteredType(tmpStr);
+            } while (enteredType == error);
 
-    auto* korobka2 = new Korobochka::Korobka{3,1};
+            if (enteredType == Tstr) {
+                auto* str = new std::string;
+                std::cout << "Please enter a string" << std::endl;
 
-    Korobochka::ElementData elementKor2{Korobochka::Tstr, strPtrKorobka2};
-    Korobochka::ElementData elementKor22{Korobochka::Tstr, strPtrKorobka22};
-    Korobochka::ElementData elementKor23{Korobochka::Tkorobka, korobka3};
+                getLineWithQoutes(*str, std::cin);
 
-    korobka2 -> data.push_back(std::move(elementKor2));
-    korobka2 -> data.push_back(std::move(elementKor22));
-    korobka2 -> data.push_back(std::move(elementKor23));
+                korobkaLinkedList->korobka.data.emplace_back(static_cast<Korobochka::TypeElem>(Tstr), str);
+            } else {
+                auto* nextKorobka = new Korobochka::Korobka();
+                auto* tmpKorobkaLinkedList = new korobkaNode{*nextKorobka};
 
-    Korobochka::ElementData element{Korobochka::Tstr, strPtr};
-    Korobochka::ElementData element2{Korobochka::Tstr, strPtr2};
-    Korobochka::ElementData element3{Korobochka::Tkorobka, korobka2};
-    Korobochka::ElementData element4{Korobochka::Tstr, strPtr3};
-
-    Korobochka::Korobka korobka{2, 2};
-
-    korobka.data.push_back(std::move(element));
-    korobka.data.push_back(std::move(element2));
-    korobka.data.push_back(std::move(element3));
-    korobka.data.push_back(std::move(element4));
+                tmpKorobkaLinkedList->prev = korobkaLinkedList;
 
 
-    korobka.calcAlignYPerLine();
-    korobka.calcAlignXPerX();
+                while (true) {
+                    std::cout << "Please enter a valid x and y for you korobka" << std::endl;
+                    std::cin >> nextKorobka->countX >> nextKorobka->countY;
 
-    korobka.printKorobka();
+                    if (nextKorobka->countX != 0 && nextKorobka->countY != 0)
+                        break;
+                }
 
+                nextKorobka->data.reserve(nextKorobka->countX * nextKorobka->countY);
+                nextKorobka->yAlignPerY.resize(nextKorobka->countY, 0);
+                nextKorobka->xAlignPerX.resize(nextKorobka->countX, 0);
+                nextKorobka->nextXPrint.resize(startKorobka.countX, 0);
+
+                korobkaLinkedList->korobka.data.emplace_back(static_cast<Korobochka::TypeElem>(Tkorobka), nextKorobka);
+                korobkaLinkedList = tmpKorobkaLinkedList;
+                newLinkedList = true;
+            }
+        }
+
+        if (newLinkedList) {
+            newLinkedList = false;
+            continue;
+        }
+
+        korobkaNode* prev = korobkaLinkedList->prev;
+        delete korobkaLinkedList;
+
+        korobkaLinkedList = prev;
+
+    } while (korobkaLinkedList != nullptr);
+
+    startKorobka.calcAlignYPerLine();
+    startKorobka.calcAlignXPerX();
+
+    startKorobka.printKorobka();
     return 0;
 }

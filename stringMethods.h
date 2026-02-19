@@ -18,6 +18,8 @@ namespace stringMethods {
     std::size_t getCountY(const std::string* str);
 
     std::size_t getLineSize(const std::string* str, std::size_t pos);
+
+    bool startwith(std::string_view str, std::string_view prefix);
 } // stringMethods5
 
 #endif //MSGKOR_STRINGMETHODS_H

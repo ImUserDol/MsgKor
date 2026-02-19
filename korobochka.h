@@ -18,7 +18,7 @@ namespace Korobochka {
 
     struct ElementData {
         TypeElem type{uninitialized};
-        void* data{};
+        void* data{nullptr};
 
 
         ~ElementData();
@@ -26,6 +26,7 @@ namespace Korobochka {
         ElementData(TypeElem type, void* data): type(type), data(data) {};
         constexpr ElementData(const ElementData&);
         ElementData& operator=(const ElementData& other);
+        constexpr ElementData() = default;
 
     };
 
